@@ -32,7 +32,7 @@ with col1:
 with col3:
     opt_type = st.radio("Option Type", ["Calls", "Puts"])
 
-# ── Fetch stock info (no caching, avoids serialization issues) ────
+# ── Fetch stock info ───────────────────────────────────────
 try:
     ticker   = yf.Ticker(symbol)
     hist     = ticker.history(period="1d")
@@ -97,26 +97,3 @@ df = df.rename(columns={
 
 display_cols = ['Strike (K)', 'Moneyness', 'Bid', 'Ask', 'Mid', 'Last Price', 'IV %', 'Volume', 'Open Interest']
 st.dataframe(df[[c for c in display_cols if c in df.columns]], use_container_width=True, hide_index=True)
-
-st.divider()
-
-# ── BS Inputs ──────────────────────────────────────────────
-st.subheader("Black-Scholes Inputs")
-st.caption("Pick a strike to see the 5 inputs ready for the BS formula")
-
-strikes = sorted(df['Strike (K)'].tolist())
-default = min(strikes, key=lambda k: abs(k - S))
-K_sel   = st.select_slider("Strike Price", options=strikes, value=default)
-
-row    = df[df['Strike (K)'] == K_sel].iloc[0]
-iv_sel = float(row['IV_raw']) if 'IV_raw' in df.columns else None
-mid_s  = round((float(row['Bid']) + float(row['Ask'])) / 2, 4)
-
-b1, b2, b3, b4, b5 = st.columns(5)
-b1.metric("S — Stock Price",  f"${S:.2f}")
-b2.metric("K — Strike",       f"${K_sel}")
-b3.metric("T — Time (years)", f"{T:.4f}")
-b4.metric("r — Risk-free",    f"{R*100:.2f}%")
-b5.metric("σ — Implied Vol",  f"{iv_sel*100:.2f}%" if iv_sel else "N/A")
-
-st.info(f"Mid Price (market): **${mid_s}** — this is what we'll compare our BS price against in Phase 2")
